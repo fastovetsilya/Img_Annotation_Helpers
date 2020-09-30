@@ -35,6 +35,7 @@ for poly_file in poly_file_list:
         if label not in label_list:
             label_list.append(label)
 
+label_list = label_list.sort()
 label_list = [label_list, [i for i in range(len(label_list))]]
        
 
