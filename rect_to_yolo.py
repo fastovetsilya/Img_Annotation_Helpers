@@ -72,8 +72,8 @@ for poly_file in poly_file_list:
         # Create a box in YOLO format
         box_yolo = [box_center_x / img_dims[0],
                     box_center_y / img_dims[1], 
-                    box_width / img_dims[0],
-                    box_height / img_dims[1]]
+                    abs(box_width / img_dims[0]),
+                    abs(box_height / img_dims[1])]
         
         box_yolo_out = str([shape_label_id] + box_yolo)
         box_yolo_out = box_yolo_out.replace(',', '').replace('[', '').replace(']','')
