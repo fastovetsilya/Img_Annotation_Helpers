@@ -46,7 +46,7 @@ def extract_labelme_labels(labelme_input_directory):
     return label_list
 
 
-def labelme2via(input_dir, output_dir, label_list, image_format=".jpg"):
+def labelme2via(input_dir, output_dir, label_list):
     """
     Transform image annotations from Labelme to VIA .json annotations format
     
@@ -58,9 +58,6 @@ def labelme2via(input_dir, output_dir, label_list, image_format=".jpg"):
         ::label_list: list, structure of type [[labels], [label_ids]]. E.g.
         [[Apples, Oranges], [0, 1]]. Use extract_labelme_labels() for 
         automatic generation
-        
-        ::image_format: str, format of the images
-        TODO: make it automatic
     """
     # Initialize VIA annotaions
     annotations = {}
@@ -74,8 +71,15 @@ def labelme2via(input_dir, output_dir, label_list, image_format=".jpg"):
             poly_annotations = f.read()
         poly_annotations = json.loads(poly_annotations)
         poly_shapes = poly_annotations["shapes"]
-        img_dims = [poly_annotations["imageWidth"], poly_annotations["imageHeight"]] # [width, height]
-        img_size = img_dims[0] * img_dims[1]
+        # img_dims = [poly_annotations["imageWidth"], poly_annotations["imageHeight"]] # [width, height]
+        image_format=".jpg" #Default file format
+        # Try automatic file format detection
+        try:
+            image_format = "." + poly_annotations["imagePath"].split(".")[-1]
+        except: 
+            print("Warning! Format detection unsuccessful")
+            pass
+        img_size = int(os.stat(os.path.join(poly_file.replace(".json", image_format))).st_size)
         
         # Initialize regions list (VIA format) and terate through the shapes
         regions = [] 
@@ -84,7 +88,7 @@ def labelme2via(input_dir, output_dir, label_list, image_format=".jpg"):
             if shape_type != "polygon": # TODO: add support for other shapes
                 print("Non-polygon shapes not supported. For support, modify labelme2via()")
                 break
-            shape_points = np.array(shape["points"])
+            shape_points = shape["points"]
             shape_label = shape["label"]
             #shape_label_id = label_list[0].index(shape_label)
             
@@ -93,8 +97,8 @@ def labelme2via(input_dir, output_dir, label_list, image_format=".jpg"):
             region["region_attributes"] = {}
             region["shape_attributes"] = {}
             region["shape_attributes"]["name"] = "polygon"
-            all_points_x = [point[0] for point in shape_points]
-            all_points_y = [point[1] for point in shape_points]
+            all_points_x = [int(point[0]) for point in shape_points]
+            all_points_y = [int(point[1]) for point in shape_points]
             region["shape_attributes"]["all_points_x"] = all_points_x
             region["shape_attributes"]["all_points_y"] = all_points_y
             region["region_attributes"]["label"] = shape_label
@@ -110,7 +114,7 @@ def labelme2via(input_dir, output_dir, label_list, image_format=".jpg"):
         ann["regions"] = regions
         ann["size"] = img_size
         # Add annotation to the annotation list
-        annotations[image_name + str(img_size)] = ann
+        annotations[str(image_name) + str(img_size)] = ann
         
     # Save .json file with VIA annotations
     annotations = json.dumps(annotations)
@@ -122,15 +126,15 @@ if __name__=="__main__":
     import argparse
     
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Labelme to VIA converter")
+    parser = argparse.ArgumentParser(description="Universal annotation converter")
     
     parser.add_argument("command", metavar="<command>", 
-                        help="convert")
-    parser.add_argument("--input_dir", required=False,
+                        help="labelme_to_via")
+    parser.add_argument("--input_dir", required=True,
                         metavar="/path/to/labelme/annotations/", 
                         default="./test/lme_to_via/json_polygons/",
                         help="Provide input directory with Labelme annotations")
-    parser.add_argument("--output_dir", required=False,
+    parser.add_argument("--output_dir", required=True,
                         metavar="/path/to/via/annotations/", 
                         default="./test/lme_to_via/via_polygons", 
                         help="Provide output directory with VIA annotations")
@@ -141,7 +145,8 @@ if __name__=="__main__":
     labels = extract_labelme_labels(args.input_dir) 
     
     # Perform transformation from Labelme to VIA
-    labelme2via(args.input_dir, args.output_dir, labels)
+    if args.command == "labelme_to_via":
+        labelme2via(args.input_dir, args.output_dir, labels)
     
     # TODO: write parts of code for all the methods here
     
