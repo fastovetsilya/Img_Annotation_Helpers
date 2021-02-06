@@ -3,6 +3,7 @@ Universal converter between image annotation formats.
 For the list of supported operations see README.md
 """
 # Import libraries
+import cv2
 import os
 import json
 import shutil
@@ -50,6 +51,8 @@ def labelmepoly2yolo(input_dir, output_dir, label_list):
     """
     Transform image annotations (polygons) from Labelme format to YOLO format
     Automatically generate bounding boxes from polygons
+    
+    # TODO: add support for other shapes
     
     Parameters:
         ::input_dir: str, path to the directory with Labelme annotations
@@ -112,14 +115,101 @@ def labelmepoly2yolo(input_dir, output_dir, label_list):
         yolo_outfile.close()
         # Copy image to that file
         shutil.copyfile(poly_file.replace(".json", image_format), 
-                        output_dir + yolo_outfile_name.replace('.txt', image_format))
+                        output_dir + yolo_outfile_name.replace(".txt", image_format))
     
     # Create classes.txt
     classes_file = open(os.path.join(output_dir, "classes.txt"), "w")
     classes_file = open(os.path.join(output_dir, "classes.txt"), "a")
     
     for i in range(np.shape(label_list)[1]):
-        classes_file.write(str(label_list[1][i]) + ' ' + label_list[0][i])
+        classes_file.write(str(label_list[1][i]) + " " + label_list[0][i])
+        classes_file.write("\n")
+    
+    classes_file.close()
+
+
+
+def labelmepoly2yolov4c(input_dir, output_dir, label_list):
+    """
+    Transform image annotations (polygons) from Labelme format to YOLOv4 format
+    Automatically approximate polygons with circles
+    Automatically generate bounding boxes from polygons
+    
+    # TODO: add automatic approximation of polygons with ellipses
+    # TODO: add support for other shapes
+    
+    Parameters:
+        ::input_dir: str, path to the directory with Labelme annotations
+        
+        ::output_dir: str, path to the directory to save VIA annotations
+        
+        ::label_list: list, structure of type [[labels], [label_ids]]. E.g.
+        [[Apples, Oranges], [0, 1]]. Use extract_labelme_labels() for 
+        automatic generation
+    """
+    
+    poly_file_list = glob.glob(input_dir + "*.json")
+    for poly_file in poly_file_list:
+        # Load polygon annotation
+        with open(poly_file, "r") as f:
+            poly_annotations = f.read()
+        poly_annotations = json.loads(poly_annotations)
+        poly_shapes = poly_annotations["shapes"]
+        image_format=".jpg" #Default file format
+        # Try automatic file format detection
+        try:
+            image_format = "." + poly_annotations["imagePath"].split(".")[-1]
+        except: 
+            print("Warning! Format detection unsuccessful")
+            pass
+        img_dims = [poly_annotations["imageWidth"], poly_annotations["imageHeight"]] # [width, height]
+        
+        # Create YOLO output file
+        yolo_outfile_name = poly_file.split("/")[-1].replace(".json", ".txt")
+        yolo_outfile = open(output_dir + yolo_outfile_name, "w")
+        yolo_outfile = open(output_dir + yolo_outfile_name, "a")
+        
+        # Iterate through the shapes
+        for shape in poly_shapes:
+            shape_type = shape["shape_type"]
+            if shape_type != "polygon":
+                print("Warning! The annotations contain shapes other than polygons")
+                continue
+            shape_points = np.array(shape["points"])
+            shape_contours = np.expand_dims(shape_points, 1).astype(np.int32)
+            shape_label = shape["label"]
+            shape_label_id = label_list[0].index(shape_label)
+            # Fit a circle to the poligon
+            fitted_circle = cv2.minEnclosingCircle(shape_contours)
+            # Find extreme points for box
+            box_width = fitted_circle[1] * 2
+            box_height = fitted_circle[1] * 2 
+            box_center_x = fitted_circle[0][0] 
+            box_center_y = fitted_circle[0][1]
+            # Create a box in YOLO format
+            box_yolo = [box_center_x / img_dims[0],
+                        box_center_y / img_dims[1], 
+                        box_width / img_dims[0],
+                        box_height / img_dims[1]]
+            
+            box_yolo_out = str([shape_label_id] + box_yolo)
+            box_yolo_out = box_yolo_out.replace(",", "").replace("[", "").replace("]","")
+            # Write box into file
+            yolo_outfile.write(box_yolo_out)
+            yolo_outfile.write("\n")
+        
+        # Close the file with YOLO annotaions 
+        yolo_outfile.close()
+        # Copy image to that file
+        shutil.copyfile(poly_file.replace(".json", image_format), 
+                        output_dir + yolo_outfile_name.replace(".txt", image_format))
+    
+    # Create classes.txt
+    classes_file = open(output_dir + "classes.txt", "w")
+    classes_file = open(output_dir + "classes.txt", "a")
+    
+    for i in range(np.shape(label_list)[1]):
+        classes_file.write(str(label_list[1][i]) + " " + label_list[0][i])
         classes_file.write("\n")
     
     classes_file.close()
@@ -128,6 +218,8 @@ def labelmepoly2yolo(input_dir, output_dir, label_list):
 def labelme2via(input_dir, output_dir, label_list):
     """
     Transform image annotations from Labelme to VIA .json annotations format
+    
+    # TODO: add support for other shapes
     
     Parameters:
         ::input_dir: str, path to the directory with Labelme annotations
@@ -164,7 +256,7 @@ def labelme2via(input_dir, output_dir, label_list):
         regions = [] 
         for shape in poly_shapes:
             shape_type = shape["shape_type"]
-            if shape_type != "polygon": # TODO: add support for other shapes
+            if shape_type != "polygon": 
                 print("Non-polygon shapes not supported. For support, modify labelme2via()")
                 break
             shape_points = shape["points"]
@@ -211,11 +303,11 @@ if __name__=="__main__":
                         help="labelme_to_via")
     parser.add_argument("--input_dir", required=False,
                         metavar="input/path", 
-                        default="./test/poly_to_yolo/json_polygons/",
+                        default="./test/poly_to_yolov4c/json_polygons/",
                         help="Provide input directory with Labelme annotations")
     parser.add_argument("--output_dir", required=False,
                         metavar="output/path", 
-                        default="./test/poly_to_yolo/yolo_rbbx/", 
+                        default="./test/poly_to_yolov4c/yolo_cbbx/", 
                         help="Provide output directory with VIA annotations")
     
     args = parser.parse_args()
@@ -224,14 +316,15 @@ if __name__=="__main__":
     labels = extract_labelme_labels(args.input_dir) 
     
     # Perform transformation from Labelme to VIA
-    if args.command == 'labelmepoly_to_yolo':
+    if args.command == "labelmepoly_to_yolo":
         labelmepoly2yolo(args.input_dir, args.output_dir, labels)
+    elif args.command == "labelmepoly_to_yolov4c":
+        labelmepoly2yolov4c(args.input_dir, args.output_dir, labels)
     elif args.command == "labelme_to_via":
         labelme2via(args.input_dir, args.output_dir, labels)
     else: 
         print("Error: command not recognized. Stop.")
-    
-    # TODO: write parts of code for all the methods here
+
     
     
     
