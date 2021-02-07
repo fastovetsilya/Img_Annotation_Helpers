@@ -28,7 +28,7 @@ OR
 ```python labelme_to_via --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 
 5) Convert VIA polygos to Labelme image annotation format (only polygons supported now)
-```python via_to_labelme --input_dir=/path/to/annotations/ --output_dir=/output/path/```
+```python via_to_labelme --input_dir=/path/to/annotations/ --output_dir=/output/path/```. To open annotations with Labelme, use ```labelme --nodata``` command.
 
 6) Create empty annotation .txt files in YOLO format for images without annotations. For better performance of YOLO, you should add images with no annotations. This method creates empty annotation files for them
 ```python create_empty_txt_yolo --input_dir=/path/to/files/```
