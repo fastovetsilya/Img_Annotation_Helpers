@@ -503,7 +503,8 @@ if __name__ == "__main__":
 
     # Check input directory
     if glob.glob(args.input_dir + "*.json") == []:
-        print("Warning: no .json files found in the input directory: {}".format(args.input_dir))
+        print("Warning: no .json files found in the input directory: {}".format(
+            args.input_dir))
 
     # Perform transformation from Labelme to VIA
     if args.command == "labelmepoly_to_yolo":
