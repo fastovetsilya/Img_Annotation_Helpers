@@ -5,7 +5,7 @@ Inspect VIA .json annotations
 import json
 
 # Load json annotations
-path_to_annotations = 'via_annotations.json'
+path_to_annotations = 'tomato.json'
 
 with open(path_to_annotations, 'r') as f:
     annotations = f.read()
