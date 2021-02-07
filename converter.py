@@ -430,7 +430,7 @@ def via2labelme(input_dir, output_dir):
     for via_annotation in via_annotations:
         file_name = via_annotation["filename"]
         # Open image to find its size
-        image = cv2.imread(file_name)
+        image = cv2.imread(os.path.join(input_dir, file_name))
 
         # Create and fill labelme dictionary with necessary data
         labelme_ann = {}
@@ -502,8 +502,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check input directory
-    if glob.glob(args.input_dir + ".json") == []:
-        print("Warning: no .json files found in the input directory")
+    if glob.glob(args.input_dir + "*.json") == []:
+        print("Warning: no .json files found in the input directory: {}".format(args.input_dir))
 
     # Perform transformation from Labelme to VIA
     if args.command == "labelmepoly_to_yolo":
