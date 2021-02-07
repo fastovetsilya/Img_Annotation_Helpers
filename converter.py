@@ -440,13 +440,3 @@ if __name__=="__main__":
         create_empty_txt_yolo(args.input_dir)
     else: 
         print("Error: command '{}' not recognized. Stop.".format(args.command))
-        
-    
-    
-    
-    
-    
-    
-    
-    
-    
