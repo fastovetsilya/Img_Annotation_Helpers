@@ -20,8 +20,13 @@ def extract_labelme_labels(labelme_input_directory):
         ::labelme_input_directory: str, directory with Labelme .json 
         annotations. 
     """
+    # Check the directory name and correct if needed
+    if labelme_input_directory[-1] != "/":
+        print("Correcting path: adding '/' to the end")
+        labelme_input_directory += "/"
+    
     # Create the list of .json files with polygon annotations
-    poly_file_list = glob.glob(labelme_input_directory + "*.json")
+    poly_file_list = glob.glob(os.path.join(labelme_input_directory, "*.json"))
     # Initialize the list of labels
     label_list = []
 
@@ -52,6 +57,7 @@ def create_empty_txt_yolo(input_dir, image_format=".jpg"):
     Create empty txt for YOLO for images without objects (annotations)
     Apply to the directory with YOLO annotations 
     Set input_dir == output_dir to save in the same directory
+    TODO: add automatic recognition of image format
 
     Parameters:
         ::input_dir: str, path to the directory with Labelme annotations. The 
@@ -59,8 +65,13 @@ def create_empty_txt_yolo(input_dir, image_format=".jpg"):
 
         ::image_format: str, format of the images. Default is ".jpg"
     """
+    # Check the directory name and correct if needed
+    if input_dir[-1] != "/":
+        print("Correcting input path: adding '/' to the end")
+        input_dir += "/"
+
     # Get images list
-    img_list = glob(input_dir + image_format)
+    img_list = glob.glob(os.path.join(input_dir, image_format))
     # Txt list
     txt_list = glob(input_dir + "*.txt")
     # Go through images and create txt files if it does not exist
@@ -85,7 +96,15 @@ def labelmerect2yolo(input_dir, output_dir, label_list):
         [[Apples, Oranges], [0, 1]]. Use extract_labelme_labels() for 
         automatic generation
     """
-    poly_file_list = glob.glob(input_dir + "*.json")
+    # Check the directory name and correct if needed
+    if input_dir[-1] != "/":
+        print("Correcting input path: adding '/' to the end")
+        input_dir += "/"
+    if output_dir[-1] != "/":
+        print("Correcting output path: adding '/' to the end")
+        output_dir += "/"
+    
+    poly_file_list = glob.glob(os.path.join(input_dir, "*.json"))
     for poly_file in poly_file_list:
         # Load polygon annotation
         with open(poly_file, "r") as f:
@@ -137,7 +156,7 @@ def labelmerect2yolo(input_dir, output_dir, label_list):
         yolo_outfile.close()
         # Copy image to that file
         shutil.copyfile(poly_file.replace(".json", image_format),
-                        output_dir + yolo_outfile_name.replace(".txt", image_format))
+                        os.path.join(output_dir, yolo_outfile_name.replace(".txt", image_format)))
 
     # Create classes.txt
     classes_file = open(os.path.join(output_dir + "classes.txt"), "w")
@@ -149,6 +168,129 @@ def labelmerect2yolo(input_dir, output_dir, label_list):
 
     classes_file.close()
 
+
+def yolo2labelmerect(input_dir, output_dir):
+    """
+    Transform YOLO image annotations (rectangles) to Labelme format
+
+    Parameters:
+        ::input_dir: str, path to the directory with Labelme annotations
+
+        ::output_dir: str, path to the directory to save annotations
+    """
+    
+    # Check the directory name and correct if needed
+    if input_dir[-1] != "/":
+        print("Correcting input path: adding '/' to the end")
+        input_dir += "/"
+    if output_dir[-1] != "/":
+        print("Correcting output path: adding '/' to the end")
+        output_dir += "/"
+    
+    # Get classes list
+    label_list = [[], []]
+    f = open(os.path.join(input_dir, "classes.txt"), "r")
+    while True: 
+        newline = f.readline()
+        if not newline:
+            break
+        label_list[0].append(newline.split(" ")[1].replace("\n", ""))
+        label_list[1].append(int(newline.split(" ")[0]))
+    f.close()
+    if len(label_list[0]) != len(label_list[1]):
+        print("Error: label list integrity check failed. Please check classes.txt")
+        return 1
+        
+    # Get annotations and images list
+    poly_file_list = glob.glob(os.path.join(input_dir, "*.txt"))
+    images_list = [fname for fname in glob.glob(os.path.join(input_dir, "*")) if fname not in poly_file_list]
+    poly_file_list = [fname for fname in poly_file_list if fname.split("/")[-1] != "classes.txt"]
+    
+    # Automatically find image format and check if format is the same for all images
+    image_format = [file_ext.split(".")[-1] for file_ext in images_list]
+    if not all(file_ext == image_format[0] for file_ext in image_format):
+        print("Error: not all images in the direcory have the same format. Please check the images")
+        return 1
+    image_format = "." + image_format[0]
+    
+    # Convert YOLO annotations to Labelme format
+    for poly_file in poly_file_list:
+        # Load image
+        image_filename = poly_file.replace(".txt", image_format).split("/")[-1]
+        try: 
+            image = cv2.imread(os.path.join(input_dir, image_filename))
+        except: 
+            print("Warning: image {} could not be loaded. Continue... ".format(image_filename))
+            continue
+        
+        # Create and fill labelme dictionary with necessary data
+        labelme_ann = {}
+        labelme_ann["version"] = "4.5.6"  # Add any other version
+        labelme_ann["flags"] = {}
+        labelme_ann["fillColor"] = [int(i) for i in list(
+            np.random.randint(255, size=3))]  # Generate random color
+        labelme_ann["lineColor"] = [
+            int(i) for i in list(np.random.randint(255, size=3))]
+        labelme_ann["imageData"] = None
+        labelme_ann["imageHeight"] = image.shape[0]
+        labelme_ann["imageWidth"] = image.shape[1]
+        labelme_ann["imagePath"] = image_filename
+        
+        #Create shapes
+        shapes = []
+        # Read file with YOLO annotations
+        f = open(poly_file, "r")
+        while True:
+            poly_annotation = f.readline()
+            if not poly_annotation:
+                f.close()
+                break 
+            
+            # Extract data from annotaion
+            poly_annotation = poly_annotation.replace("\n", "")
+            poly_annotation = poly_annotation.split(" ")
+            poly_annotation = [float(ann) for ann in poly_annotation]
+            label_id = int(poly_annotation[0])
+            label = label_list[0][label_list[1].index(label_id)]
+            
+            # YOLO format: <center x>, <center y>, width, height (scaled)
+            yolo_ann = [poly_annotation[1], poly_annotation[2], 
+                        poly_annotation[3], poly_annotation[4]]
+            
+            # Rescale yolo annotation (according to image size)
+            yolo_ann = [yolo_ann[0] * image.shape[1], 
+                        yolo_ann[1] * image.shape[0], 
+                        yolo_ann[2] * image.shape[1], 
+                        yolo_ann[3] * image.shape[0]]
+            
+            # Create shape points
+            points = [[yolo_ann[0] - yolo_ann[2] / 2, yolo_ann[1] + yolo_ann[3] / 2], 
+                      [yolo_ann[0] + yolo_ann[2] / 2, yolo_ann[1] - yolo_ann[3] / 2]]
+            
+            # Create shape
+            shape = {}
+            shape["line_color"] = None
+            shape["fill_color"] = None
+            shape["label"] = label
+            shape["points"] = points
+            shape["group_id"] = None
+            shape["shape_type"] = "rectangle"
+            shape["flags"] = {}
+            shapes.append(shape)
+        f.close()
+        labelme_ann["shapes"] = shapes
+
+        # Write annotations to the file
+        labelme_ann = json.dumps(labelme_ann)
+        lme_ann_name = image_filename.replace(image_filename.split(".")[-1], "json")
+        
+        with open(os.path.join(output_dir, lme_ann_name), "w") as f:
+            f.write(labelme_ann)
+
+        # Copy image file
+        shutil.copyfile(os.path.join(input_dir, image_filename),
+                        os.path.join(output_dir, image_filename))
+    
 
 def labelmepoly2yolo(input_dir, output_dir, label_list):
     """
@@ -165,8 +307,15 @@ def labelmepoly2yolo(input_dir, output_dir, label_list):
         [[Apples, Oranges], [0, 1]]. Use extract_labelme_labels() for 
         automatic generation
     """
-
-    poly_file_list = glob.glob(input_dir + "*.json")
+    # Check the directory name and correct if needed
+    if input_dir[-1] != "/":
+        print("Correcting input path: adding '/' to the end")
+        input_dir += "/"
+    if output_dir[-1] != "/":
+        print("Correcting output path: adding '/' to the end")
+        output_dir += "/"
+        
+    poly_file_list = glob.glob(os.path.join(input_dir, "*.json"))
     for poly_file in poly_file_list:
         # Load polygon annotation
         with open(poly_file, "r") as f:
@@ -219,7 +368,7 @@ def labelmepoly2yolo(input_dir, output_dir, label_list):
         yolo_outfile.close()
         # Copy image to that file
         shutil.copyfile(poly_file.replace(".json", image_format),
-                        output_dir + yolo_outfile_name.replace(".txt", image_format))
+                        os.path.join(output_dir, yolo_outfile_name.replace(".txt", image_format)))
 
     # Create classes.txt
     classes_file = open(os.path.join(output_dir, "classes.txt"), "w")
@@ -250,8 +399,15 @@ def labelmepoly2yolov4c(input_dir, output_dir, label_list):
         [[Apples, Oranges], [0, 1]]. Use extract_labelme_labels() for 
         automatic generation
     """
+    # Check the directory name and correct if needed
+    if input_dir[-1] != "/":
+        print("Correcting input path: adding '/' to the end")
+        input_dir += "/"
+    if output_dir[-1] != "/":
+        print("Correcting output path: adding '/' to the end")
+        output_dir += "/"
 
-    poly_file_list = glob.glob(input_dir + "*.json")
+    poly_file_list = glob.glob(os.path.join(input_dir, "*.json"))
     for poly_file in poly_file_list:
         # Load polygon annotation
         with open(poly_file, "r") as f:
@@ -307,11 +463,11 @@ def labelmepoly2yolov4c(input_dir, output_dir, label_list):
         yolo_outfile.close()
         # Copy image to that file
         shutil.copyfile(poly_file.replace(".json", image_format),
-                        output_dir + yolo_outfile_name.replace(".txt", image_format))
+                        os.path.join(output_dir + yolo_outfile_name.replace(".txt", image_format)))
 
     # Create classes.txt
-    classes_file = open(output_dir + "classes.txt", "w")
-    classes_file = open(output_dir + "classes.txt", "a")
+    classes_file = open(os.path.join(output_dir, "classes.txt"), "w")
+    classes_file = open(os.path.join(output_dir, "classes.txt"), "a")
 
     for i in range(np.shape(label_list)[1]):
         classes_file.write(str(label_list[1][i]) + " " + label_list[0][i])
@@ -329,11 +485,19 @@ def labelme2via(input_dir, output_dir):
 
         ::output_dir: str, path to the directory to save annotations
     """
+    # Check the directory name and correct if needed
+    if input_dir[-1] != "/":
+        print("Correcting input path: adding '/' to the end")
+        input_dir += "/"
+    if output_dir[-1] != "/":
+        print("Correcting output path: adding '/' to the end")
+        output_dir += "/"
+    
     # Initialize VIA annotaions
     annotations = {}
 
     # Create the list of .json files with polygon annotations
-    poly_file_list = glob.glob(input_dir + "*.json")
+    poly_file_list = glob.glob(os.path.join(input_dir, "*.json"))
     for poly_file in poly_file_list:
 
         # Load the files with annotations and extract the necessary data
@@ -409,8 +573,16 @@ def via2labelme(input_dir, output_dir):
 
         ::output_dir: str, path to the directory to save annotations
     """
+    # Check the directory name and correct if needed
+    if input_dir[-1] != "/":
+        print("Correcting input path: adding '/' to the end")
+        input_dir += "/"
+    if output_dir[-1] != "/":
+        print("Correcting output path: adding '/' to the end")
+        output_dir += "/"
+    
     # Find file with annotations
-    poly_file = glob.glob(input_dir + "*.json")
+    poly_file = glob.glob(os.path.join(input_dir, "*.json"))
     # Check if file exists and if it is the only .json file in the directory
     if poly_file == []:
         print("Error. No annotation file found. Check that .json annotations are in the input directory")
@@ -518,6 +690,12 @@ if __name__ == "__main__":
         if args.output_dir is not None:
             labels = extract_labelme_labels(args.input_dir)
             labelmerect2yolo(args.input_dir, args.output_dir, labels)
+        else:
+            print("Error: parameter output_dir is required for this method.")
+            pass
+    elif args.command == "yolo_to_labelmerect":
+        if args.output_dir is not None:
+            yolo2labelmerect(args.input_dir, args.output_dir)
         else:
             print("Error: parameter output_dir is required for this method.")
             pass

@@ -18,19 +18,22 @@ OR
 1) Convert Labelme rectangles to YOLO format
 ```python labelmerect_to_yolo --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 
-2) Convert Labelme polygons to YOLO bounding boxes 
+2) Convert YOLO rectangles to Labelme format
+```python yolo_to_labelmerect --input_dir=/path/to/annotations/ --output_dir=/output/path/```
+
+3) Convert Labelme polygons to YOLO bounding boxes 
 ```python labelmepoly_to_yolo --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 
-3) Convert Labelme polygons to YOLOv4c ellipse coordinates (only circles supported now)
+4) Convert Labelme polygons to YOLOv4c ellipse coordinates (only circles supported now)
 ```python labelmepoly_to_yolov4c --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 
-4) Convert Labelme polygons to VIA image annotation format (only polygons supported now)
+5) Convert Labelme polygons to VIA image annotation format (only polygons supported now)
 ```python labelme_to_via --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 
-5) Convert VIA polygos to Labelme image annotation format (only polygons supported now)
+6) Convert VIA polygos to Labelme image annotation format (only polygons supported now)
 ```python via_to_labelme --input_dir=/path/to/annotations/ --output_dir=/output/path/```. To open annotations with Labelme, use ```labelme --nodata``` command.
 
-6) Create empty annotation .txt files in YOLO format for images without annotations. For better performance of YOLO, you should add images with no annotations. This method creates empty annotation files for them
+7) Create empty annotation .txt files in YOLO format for images without annotations. For better performance of YOLO, you should add images with no annotations. This method creates empty annotation files for them
 ```python create_empty_txt_yolo --input_dir=/path/to/files/```
 
 Access help with ```python convert.py -h```. Also read comments in the code. 
@@ -39,11 +42,11 @@ Access help with ```python convert.py -h```. Also read comments in the code.
 
 - [x] Add support for reverse VIA to Labelme converter (02/06/2021)
 
+- [x] Add YOLO (LabelImg) to Labelme and Labelme to YOLO converters (02/10/2021)
+
 - [ ] Add approximation of polygons with ellipses for YOLOv4c
 
 - [ ] Add Labelme to VIA and VIA to Labelme converters for rectangles (bounding boxes)
-
-- [ ] Add YOLO (LabelImg) to Labelme and Labelme to YOLO converters
 
 - [ ] Add YOLO (LabelImg) to VIA and VIA to YOLO converters
 
