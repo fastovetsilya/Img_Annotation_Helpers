@@ -18,8 +18,9 @@ OR
 1) Convert Labelme rectangles to YOLO format
 ```python labelmerect_to_yolo --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 
-2) Convert YOLO rectangles to Labelme format
+2) Convert YOLO annotations to Labelme rectangles
 ```python yolo_to_labelmerect --input_dir=/path/to/annotations/ --output_dir=/output/path/```
+To open annotations with Labelme, use ```labelme --nodata``` command.
 
 3) Convert Labelme polygons to YOLO bounding boxes 
 ```python labelmepoly_to_yolo --input_dir=/path/to/annotations/ --output_dir=/output/path/```
@@ -49,5 +50,3 @@ Access help with ```python convert.py -h```. Also read comments in the code.
 - [ ] Add Labelme to VIA and VIA to Labelme converters for rectangles (bounding boxes)
 
 - [ ] Add YOLO (LabelImg) to VIA and VIA to YOLO converters
-
-
