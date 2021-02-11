@@ -30,12 +30,12 @@ The polygons are transformed to bounding boxes to be used with YOLO using minimu
 4) Convert **Labelme polygons to YOLOv4c** ellipse coordinates (only circles supported now)
 ```python labelmepoly_to_yolov4c --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 
-5) Convert **Labelme shapes to VIA** image annotation format ***(only polygons supported now)**
+5) Convert **Labelme shapes to VIA** image annotation format **(only polygons supported now)**
 ```python labelme_to_via --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 Group IDs can also be converted. By default, the method saves "Group ID" column in Labelme as "Group_ID" attribute in VIA annotations. The default group ID attribute name can be changed by setting ```----group_id_name``` argument. For example, use: 
 ```python labelme_to_via --input_dir=/path/to/annotations/ --output_dir=/output/path/ --group_id_name=Track_ID``` to save "Group ID" column in Labelme as Track_ID attribute in VIA
 
-6) Convert **VIA shapes to Labelme** image annotation format ***(only polygons supported now)**
+6) Convert **VIA shapes to Labelme** image annotation format **(only polygons supported now)**
 ```python via_to_labelme --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 Group IDs for Labelme can also be converted. By default, the method looks for the attribute name "Group_ID" in VIA annotations. The default group ID attribute name can be changed by setting ```----group_id_name``` argument. For example, use: 
 ```python via_to_labelme --input_dir=/path/to/annotations/ --output_dir=/output/path/ --group_id_name=Track_ID``` to parse Track_ID attribute from VIA to "Group ID" column in Labelme.
