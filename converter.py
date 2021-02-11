@@ -10,6 +10,7 @@ import shutil
 import glob
 import numpy as np
 
+
 def extract_labelme_labels(labelme_input_directory):
     """
     Extract the list of labels from .json Labelme annotations and create
@@ -23,7 +24,7 @@ def extract_labelme_labels(labelme_input_directory):
     if labelme_input_directory[-1] != "/":
         print("Correcting path: adding '/' to the end")
         labelme_input_directory += "/"
-    
+
     # Create the list of .json files with polygon annotations
     poly_file_list = glob.glob(os.path.join(labelme_input_directory, "*.json"))
     # Initialize the list of labels
@@ -102,7 +103,7 @@ def labelmerect2yolo(input_dir, output_dir, label_list):
     if output_dir[-1] != "/":
         print("Correcting output path: adding '/' to the end")
         output_dir += "/"
-    
+
     poly_file_list = glob.glob(os.path.join(input_dir, "*.json"))
     for poly_file in poly_file_list:
         # Load polygon annotation
@@ -178,7 +179,7 @@ def yolo2labelmerect(input_dir, output_dir):
 
         ::output_dir: str, path to the directory to save annotations
     """
-    
+
     # Check the directory name and correct if needed
     if input_dir[-1] != "/":
         print("Correcting input path: adding '/' to the end")
@@ -186,11 +187,11 @@ def yolo2labelmerect(input_dir, output_dir):
     if output_dir[-1] != "/":
         print("Correcting output path: adding '/' to the end")
         output_dir += "/"
-    
+
     # Get classes list
     label_list = [[], []]
     f = open(os.path.join(input_dir, "classes.txt"), "r")
-    while True: 
+    while True:
         newline = f.readline()
         if not newline:
             break
@@ -200,29 +201,32 @@ def yolo2labelmerect(input_dir, output_dir):
     if len(label_list[0]) != len(label_list[1]):
         print("Error: label list integrity check failed. Please check classes.txt")
         return 1
-        
+
     # Get annotations and images list
     poly_file_list = glob.glob(os.path.join(input_dir, "*.txt"))
-    images_list = [fname for fname in glob.glob(os.path.join(input_dir, "*")) if fname not in poly_file_list]
-    poly_file_list = [fname for fname in poly_file_list if fname.split("/")[-1] != "classes.txt"]
-    
+    images_list = [fname for fname in glob.glob(
+        os.path.join(input_dir, "*")) if fname not in poly_file_list]
+    poly_file_list = [fname for fname in poly_file_list if fname.split(
+        "/")[-1] != "classes.txt"]
+
     # Automatically find image format and check if format is the same for all images
     image_format = [file_ext.split(".")[-1] for file_ext in images_list]
     if not all(file_ext == image_format[0] for file_ext in image_format):
         print("Error: not all images in the direcory have the same format. Please check the images")
         return 1
     image_format = "." + image_format[0]
-    
+
     # Convert YOLO annotations to Labelme format
     for poly_file in poly_file_list:
         # Load image
         image_filename = poly_file.replace(".txt", image_format).split("/")[-1]
-        try: 
+        try:
             image = cv2.imread(os.path.join(input_dir, image_filename))
-        except: 
-            print("Warning: image {} could not be loaded. Continue... ".format(image_filename))
+        except:
+            print("Warning: image {} could not be loaded. Continue... ".format(
+                image_filename))
             continue
-        
+
         # Create and fill labelme dictionary with necessary data
         labelme_ann = {}
         labelme_ann["version"] = "4.5.6"  # Add any other version
@@ -235,8 +239,8 @@ def yolo2labelmerect(input_dir, output_dir):
         labelme_ann["imageHeight"] = image.shape[0]
         labelme_ann["imageWidth"] = image.shape[1]
         labelme_ann["imagePath"] = image_filename
-        
-        #Create shapes
+
+        # Create shapes
         shapes = []
         # Read file with YOLO annotations
         f = open(poly_file, "r")
@@ -244,29 +248,29 @@ def yolo2labelmerect(input_dir, output_dir):
             poly_annotation = f.readline()
             if not poly_annotation:
                 f.close()
-                break 
-            
+                break
+
             # Extract data from annotaion
             poly_annotation = poly_annotation.replace("\n", "")
             poly_annotation = poly_annotation.split(" ")
             poly_annotation = [float(ann) for ann in poly_annotation]
             label_id = int(poly_annotation[0])
             label = label_list[0][label_list[1].index(label_id)]
-            
+
             # YOLO format: <center x>, <center y>, width, height (scaled)
-            yolo_ann = [poly_annotation[1], poly_annotation[2], 
+            yolo_ann = [poly_annotation[1], poly_annotation[2],
                         poly_annotation[3], poly_annotation[4]]
-            
+
             # Rescale yolo annotation (according to image size)
-            yolo_ann = [yolo_ann[0] * image.shape[1], 
-                        yolo_ann[1] * image.shape[0], 
-                        yolo_ann[2] * image.shape[1], 
+            yolo_ann = [yolo_ann[0] * image.shape[1],
+                        yolo_ann[1] * image.shape[0],
+                        yolo_ann[2] * image.shape[1],
                         yolo_ann[3] * image.shape[0]]
-            
+
             # Create shape points
-            points = [[yolo_ann[0] - yolo_ann[2] / 2, yolo_ann[1] + yolo_ann[3] / 2], 
+            points = [[yolo_ann[0] - yolo_ann[2] / 2, yolo_ann[1] + yolo_ann[3] / 2],
                       [yolo_ann[0] + yolo_ann[2] / 2, yolo_ann[1] - yolo_ann[3] / 2]]
-            
+
             # Create shape
             shape = {}
             shape["line_color"] = None
@@ -282,15 +286,16 @@ def yolo2labelmerect(input_dir, output_dir):
 
         # Write annotations to the file
         labelme_ann = json.dumps(labelme_ann)
-        lme_ann_name = image_filename.replace(image_filename.split(".")[-1], "json")
-        
+        lme_ann_name = image_filename.replace(
+            image_filename.split(".")[-1], "json")
+
         with open(os.path.join(output_dir, lme_ann_name), "w") as f:
             f.write(labelme_ann)
 
         # Copy image file
         shutil.copyfile(os.path.join(input_dir, image_filename),
                         os.path.join(output_dir, image_filename))
-    
+
 
 def labelmepoly2yolo(input_dir, output_dir, label_list):
     """
@@ -314,7 +319,7 @@ def labelmepoly2yolo(input_dir, output_dir, label_list):
     if output_dir[-1] != "/":
         print("Correcting output path: adding '/' to the end")
         output_dir += "/"
-        
+
     poly_file_list = glob.glob(os.path.join(input_dir, "*.json"))
     for poly_file in poly_file_list:
         # Load polygon annotation
@@ -494,7 +499,7 @@ def labelme2via(input_dir, output_dir, groupid_name="Group_ID"):
     if output_dir[-1] != "/":
         print("Correcting output path: adding '/' to the end")
         output_dir += "/"
-    
+
     # Initialize VIA annotaions
     annotations = {}
 
@@ -535,7 +540,7 @@ def labelme2via(input_dir, output_dir, groupid_name="Group_ID"):
             region = {}
             region["region_attributes"] = {}
             region["shape_attributes"] = {}
-            
+
             # If shape is a polygon:
             if shape_type == "polygon":
                 region["shape_attributes"]["name"] = "polygon"
@@ -554,7 +559,7 @@ def labelme2via(input_dir, output_dir, groupid_name="Group_ID"):
                 region["shape_attributes"]["y"] = y
                 region["shape_attributes"]["width"] = width
                 region["shape_attributes"]["height"] = height
-            
+
             region["region_attributes"]["label"] = shape_label
             if shape_groupid:
                 region["region_attributes"][groupid_name] = shape_groupid
@@ -592,7 +597,7 @@ def via2labelme(input_dir, output_dir, groupid_name="Group_ID"):
         ::input_dir: str, path to the directory with Labelme annotations
 
         ::output_dir: str, path to the directory to save annotations
-        
+
         ::groupid_attr: str, group id attribute name. Default is None (not used)
     """
     # Check the directory name and correct if needed
@@ -602,7 +607,7 @@ def via2labelme(input_dir, output_dir, groupid_name="Group_ID"):
     if output_dir[-1] != "/":
         print("Correcting output path: adding '/' to the end")
         output_dir += "/"
-    
+
     # Find file with annotations
     poly_file = glob.glob(os.path.join(input_dir, "*.json"))
     # Check if file exists and if it is the only .json file in the directory
@@ -648,19 +653,20 @@ def via2labelme(input_dir, output_dir, groupid_name="Group_ID"):
             else:
                 try:
                     group_id = int(region["region_attributes"][groupid_name])
-                except: 
-                    print("Warning: could not convert one or more group IDs in {}. Continue...".format(file_name))
+                except:
+                    print("Warning: could not convert one or more group IDs in {}. Continue...".format(
+                        file_name))
                     group_id = None
-                    
+
             shape_type = region["shape_attributes"]["name"]
             if shape_type not in ["polygon", "rect"]:
                 print(
                     "Error: shapes other than polygons and rectangles not yet supported. Please modify via2labelme()")
                 return 1
-            
+
             # Initialize shape
             shape = {}
-            # If shape type is a polygon 
+            # If shape type is a polygon
             if shape_type == "polygon":
                 all_points_x = region["shape_attributes"]["all_points_x"]
                 all_points_y = region["shape_attributes"]["all_points_y"]
@@ -671,8 +677,8 @@ def via2labelme(input_dir, output_dir, groupid_name="Group_ID"):
                 for i in range(len(all_points_x)):
                     points.append([int(all_points_x[i]), int(all_points_y[i])])
                 shape["shape_type"] = "polygon"
-                
-            # If shape is a rectangle 
+
+            # If shape is a rectangle
             if shape_type == "rect":
                 x = region["shape_attributes"]["x"]
                 y = region["shape_attributes"]["y"]
@@ -680,7 +686,7 @@ def via2labelme(input_dir, output_dir, groupid_name="Group_ID"):
                 height = region["shape_attributes"]["height"]
                 shape["shape_type"] = "rectangle"
                 points = [[x, y], [x + width, y + height]]
-            
+
             # Create shape
             shape["line_color"] = None
             shape["fill_color"] = None
@@ -717,8 +723,8 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", required=False,
                         metavar="output/path",
                         help="Provide output directory. Output directory IS NOT created automatically")
-    parser.add_argument("--group_id_name", required=False, 
-                        default = "Group_ID",
+    parser.add_argument("--group_id_name", required=False,
+                        default="Group_ID",
                         help="Provide the name of the attribute to parse in the Group ID column (optional)")
     args = parser.parse_args()
 
