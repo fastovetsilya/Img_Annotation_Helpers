@@ -130,6 +130,7 @@ def labelmerect2yolo(input_dir, output_dir, label_list):
             shape_type = shape["shape_type"]
             if shape_type != "rectangle":
                 print("Warning! The annotations contain shapes other than rectangles")
+                print("This method will only convert rectangles to YOLO")
                 continue
             shape_points = np.array(shape["points"])
             shape_label = shape["label"]
@@ -341,6 +342,7 @@ def labelmepoly2yolo(input_dir, output_dir, label_list):
             shape_type = shape["shape_type"]
             if shape_type != "polygon":
                 print("Warning! The annotations contain shapes other than polygons")
+                print("This method will convert only polygons to YOLO")
                 continue
             shape_points = np.array(shape["points"])
             shape_label = shape["label"]
@@ -433,6 +435,7 @@ def labelmepoly2yolov4c(input_dir, output_dir, label_list):
             shape_type = shape["shape_type"]
             if shape_type != "polygon":
                 print("Warning! The annotations contain shapes other than polygons")
+                print("This method will convert only polygons to YOLO")
                 continue
             shape_points = np.array(shape["points"])
             shape_contours = np.expand_dims(shape_points, 1).astype(np.int32)
@@ -519,9 +522,9 @@ def labelme2via(input_dir, output_dir, groupid_name="Group_ID"):
         regions = []
         for shape in poly_shapes:
             shape_type = shape["shape_type"]
-            if shape_type != "polygon":
+            if shape_type not in ["polygon", "rectangle"]:
                 print(
-                    "Error: shapes other than polygons not yet supported. Please modify labelme2via()")
+                    "Error: shapes other than polygons and rectangles not yet supported. Please modify labelme2via()")
                 return 1
             shape_points = shape["points"]
             shape_label = shape["label"]
@@ -532,11 +535,26 @@ def labelme2via(input_dir, output_dir, groupid_name="Group_ID"):
             region = {}
             region["region_attributes"] = {}
             region["shape_attributes"] = {}
-            region["shape_attributes"]["name"] = "polygon"
-            all_points_x = [int(point[0]) for point in shape_points]
-            all_points_y = [int(point[1]) for point in shape_points]
-            region["shape_attributes"]["all_points_x"] = all_points_x
-            region["shape_attributes"]["all_points_y"] = all_points_y
+            
+            # If shape is a polygon:
+            if shape_type == "polygon":
+                region["shape_attributes"]["name"] = "polygon"
+                all_points_x = [int(point[0]) for point in shape_points]
+                all_points_y = [int(point[1]) for point in shape_points]
+                region["shape_attributes"]["all_points_x"] = all_points_x
+                region["shape_attributes"]["all_points_y"] = all_points_y
+            # If shape is a rectangle
+            if shape_type == "rectangle":
+                region["shape_attributes"]["name"] = "rect"
+                x = int(shape_points[0][0])
+                y = int(shape_points[1][1])
+                width = int(shape_points[1][0] - shape_points[0][0])
+                height = int(shape_points[0][1] - shape_points[1][1])
+                region["shape_attributes"]["x"] = x
+                region["shape_attributes"]["y"] = y
+                region["shape_attributes"]["width"] = width
+                region["shape_attributes"]["height"] = height
+            
             region["region_attributes"]["label"] = shape_label
             if shape_groupid:
                 region["region_attributes"][groupid_name] = shape_groupid

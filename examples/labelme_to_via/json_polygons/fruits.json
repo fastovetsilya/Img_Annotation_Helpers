@@ -189,6 +189,22 @@
       "group_id": 2,
       "shape_type": "polygon",
       "flags": {}
+    },
+    {
+      "label": "Kiwi",
+      "points": [
+        [
+          398.30927835051546,
+          956.8556701030928
+        ],
+        [
+          843.6701030927835,
+          570.2577319587629
+        ]
+      ],
+      "group_id": 0,
+      "shape_type": "rectangle",
+      "flags": {}
     }
   ],
   "imagePath": "fruits_1.jpg",
