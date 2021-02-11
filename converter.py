@@ -724,7 +724,7 @@ if __name__ == "__main__":
 
     # Check input directory
     if glob.glob(args.input_dir + "*.json") == []:
-        print("Warning: no .json files found in the input directory: {}".format(
+        print("Warning: json check found no .json files found in the input directory: {}".format(
             args.input_dir))
 
     # Perform transformation from Labelme to VIA
@@ -787,6 +787,18 @@ if __name__ == "__main__":
             via2labelme(args.input_dir, tmp_dir, args.group_id_name)
             labels = extract_labelme_labels(tmp_dir)
             labelmerect2yolo(tmp_dir, args.output_dir, labels)
+            shutil.rmtree(tmp_dir)
+        else:
+            print("Error: parameter output_dir is required for this method.")
+            pass
+    elif args.command == "yolo_to_viarect":
+        if args.output_dir is not None:
+            # Convert to Labelme annotations and then Labelme to YOLO
+            tmp_dir = os.path.join(args.output_dir, "tmp/")
+            os.mkdir(tmp_dir)
+            yolo2labelmerect(args.input_dir, tmp_dir)
+            labels = extract_labelme_labels(tmp_dir)
+            labelme2via(tmp_dir, args.output_dir, labels)
             shutil.rmtree(tmp_dir)
         else:
             print("Error: parameter output_dir is required for this method.")

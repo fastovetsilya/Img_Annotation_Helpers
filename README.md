@@ -50,7 +50,11 @@ The polygons are transformed to bounding boxes to be used with YOLO using minimu
 ```python viarect_to_yolo --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 Indirect converter from VIA rectangles to YOLO bounding boxes. Converts VIA polygons to Labelme rectangles, and then converts Labelme rectangles to YOLO by creating and removing /tmp directory in the output path.  
 
-9) Create **empty annotation .txt files in YOLO format** for images without annotations. For better performance of YOLO, you should add images with no annotations. This method creates empty annotation files for them
+9) Convert **YOLO bounding boxes to VIA rectangles**
+```python yolo_to_viarect --input_dir=/path/to/annotations/ --output_dir=/output/path/```
+Indirect converter from YOLO bounding boxes to VIA rectangles. Converts YOLO bounding boxes to Labelme rectangles, and then converts Labelme rectangles to VIA by creating and removing /tmp directory in the output path.  
+
+10) Create **empty annotation .txt files in YOLO format** for images without annotations. For better performance of YOLO, you should add images with no annotations. This method creates empty annotation files for them
 ```python create_empty_txt_yolo --input_dir=/path/to/files/```
 
 Access help with ```python convert.py -h```. Also read comments in the code. 
@@ -61,8 +65,8 @@ Access help with ```python convert.py -h```. Also read comments in the code.
 
 - [x] Add YOLO (LabelImg) to Labelme and Labelme to YOLO converters (02/10/2021)
 
-- [ ] Add Labelme to VIA and VIA to Labelme converters for other shapes (only polygons and rectangles supported now)
+- [x] Add YOLO (LabelImg) to VIA and VIA to YOLO converters(02/10/2021)
 
-- [ ] Add YOLO (LabelImg) to VIA and VIA to YOLO converters
+- [ ] Add Labelme to VIA and VIA to Labelme converters for other shapes (only polygons and rectangles supported now)
 
 - [ ] Add approximation of polygons with ellipses for YOLOv4c
