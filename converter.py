@@ -653,26 +653,40 @@ def via2labelme(input_dir, output_dir, groupid_name="Group_ID"):
                     group_id = None
                     
             shape_type = region["shape_attributes"]["name"]
-            if shape_type != "polygon":
+            if shape_type not in ["polygon", "rect"]:
                 print(
-                    "Error: shapes other than polygons not yet supported. Please modify via2labelme()")
+                    "Error: shapes other than polygons and rectangles not yet supported. Please modify via2labelme()")
                 return 1
-            all_points_x = region["shape_attributes"]["all_points_x"]
-            all_points_y = region["shape_attributes"]["all_points_y"]
-            if len(all_points_x) != len(all_points_y):
-                print("Error: annotation points mismatch")
-                return 1
-            points = []
-            for i in range(len(all_points_x)):
-                points.append([int(all_points_x[i]), int(all_points_y[i])])
-            # Create shape
+            
+            # Initialize shape
             shape = {}
+            # If shape type is a polygon 
+            if shape_type == "polygon":
+                all_points_x = region["shape_attributes"]["all_points_x"]
+                all_points_y = region["shape_attributes"]["all_points_y"]
+                if len(all_points_x) != len(all_points_y):
+                    print("Error: annotation points mismatch")
+                    return 1
+                points = []
+                for i in range(len(all_points_x)):
+                    points.append([int(all_points_x[i]), int(all_points_y[i])])
+                shape["shape_type"] = "polygon"
+                
+            # If shape is a rectangle 
+            if shape_type == "rect":
+                x = region["shape_attributes"]["x"]
+                y = region["shape_attributes"]["y"]
+                width = region["shape_attributes"]["width"]
+                height = region["shape_attributes"]["height"]
+                shape["shape_type"] = "rectangle"
+                points = [[x, y], [x + width, y + height]]
+            
+            # Create shape
             shape["line_color"] = None
             shape["fill_color"] = None
             shape["label"] = label
             shape["points"] = points
             shape["group_id"] = group_id
-            shape["shape_type"] = shape_type
             shape["flags"] = {}
             shapes.append(shape)
 
