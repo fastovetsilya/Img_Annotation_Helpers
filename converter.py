@@ -476,7 +476,7 @@ def labelmepoly2yolov4c(input_dir, output_dir, label_list):
     classes_file.close()
 
 
-def labelme2via(input_dir, output_dir):
+def labelme2via(input_dir, output_dir, groupid_name="Group_ID"):
     """
     Transform image annotations from Labelme to VIA .json annotations format
 

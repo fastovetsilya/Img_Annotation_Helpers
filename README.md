@@ -49,6 +49,6 @@ Access help with ```python convert.py -h```. Also read comments in the code.
 
 - [ ] Add approximation of polygons with ellipses for YOLOv4c
 
-- [ ] Add Labelme to VIA and VIA to Labelme converters for rectangles (bounding boxes)
+- [ ] Add Labelme to VIA and VIA to Labelme converters for other shapes (only polygons supported now)
 
 - [ ] Add YOLO (LabelImg) to VIA and VIA to YOLO converters
