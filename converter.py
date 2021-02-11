@@ -527,6 +527,7 @@ def labelme2via(input_dir, output_dir, groupid_name="Group_ID"):
             shape_points = shape["points"]
             shape_label = shape["label"]
             #shape_label_id = label_list[0].index(shape_label)
+            shape_groupid = shape["group_id"]
 
             # Create region part
             region = {}
@@ -538,6 +539,8 @@ def labelme2via(input_dir, output_dir, groupid_name="Group_ID"):
             region["shape_attributes"]["all_points_x"] = all_points_x
             region["shape_attributes"]["all_points_y"] = all_points_y
             region["region_attributes"]["label"] = shape_label
+            if shape_groupid:
+                region["region_attributes"][groupid_name] = shape_groupid
 
             # Append to the list of regions
             regions.append(region)
@@ -723,7 +726,7 @@ if __name__ == "__main__":
             pass
     elif args.command == "labelme_to_via":
         if args.output_dir is not None:
-            labelme2via(args.input_dir, args.output_dir)
+            labelme2via(args.input_dir, args.output_dir, args.group_id_name)
         else:
             print("Error: parameter output_dir is required for this method.")
             pass

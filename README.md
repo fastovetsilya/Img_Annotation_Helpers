@@ -3,6 +3,7 @@ Bunch of tools to help annotate images
 
 ## Universal annotation converter
 Command line tool to transform annotation formats between annotation apps. Both bounding box annotations for object detection (rectangles, circles etc.) and polygon annotations for instance segmentation (polygons) are covered. Labelme and VIA annotators are used for both polygon annotation for instance segmentation and annotation with rectangular bounding boxes for standard object detection. The polygons are transformed to bounding boxes to be used with YOLO using minimum covering rectangle. 
+Currently supports convertation between the following apps: Labelme, VGG image annotator (VIA), Labelme (YOLO format).
 
 ### Requirements
 ```pip install -r requirements.txt```
