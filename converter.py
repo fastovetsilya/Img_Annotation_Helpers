@@ -564,7 +564,7 @@ def labelme2via(input_dir, output_dir):
         outfile.write(annotations)
 
 
-def via2labelme(input_dir, output_dir):
+def via2labelme(input_dir, output_dir, groupid_name="Group_ID"):
     """
     Transform image annotations from VIA to Labelme .json annotations format
 
@@ -572,6 +572,8 @@ def via2labelme(input_dir, output_dir):
         ::input_dir: str, path to the directory with Labelme annotations
 
         ::output_dir: str, path to the directory to save annotations
+        
+        ::groupid_attr: str, group id attribute name. Default is None (not used)
     """
     # Check the directory name and correct if needed
     if input_dir[-1] != "/":
@@ -620,7 +622,17 @@ def via2labelme(input_dir, output_dir):
         shapes = []
         for region in via_annotation["regions"]:
             label = region["region_attributes"]['label']
-            shape_type = region["shape_attributes"]['name']
+            # Group ID attribute
+            if groupid_name not in region["region_attributes"]:
+                group_id = None
+            else:
+                try:
+                    group_id = int(region["region_attributes"][groupid_name])
+                except: 
+                    print("Warning: could not convert one or more group IDs in {}. Continue...".format(file_name))
+                    group_id = None
+                    
+            shape_type = region["shape_attributes"]["name"]
             if shape_type != "polygon":
                 print(
                     "Error: shapes other than polygons not yet supported. Please modify via2labelme()")
@@ -639,7 +651,7 @@ def via2labelme(input_dir, output_dir):
             shape["fill_color"] = None
             shape["label"] = label
             shape["points"] = points
-            shape["group_id"] = None
+            shape["group_id"] = group_id
             shape["shape_type"] = shape_type
             shape["flags"] = {}
             shapes.append(shape)
@@ -671,6 +683,9 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", required=False,
                         metavar="output/path",
                         help="Provide output directory")
+    parser.add_argument("--group_id_name", required=False, 
+                        default = "Group_ID",
+                        help="Provide the name of the attribute to parse in the Group ID column")
     args = parser.parse_args()
 
     # Check input directory
@@ -714,7 +729,7 @@ if __name__ == "__main__":
             pass
     elif args.command == "via_to_labelme":
         if args.output_dir is not None:
-            via2labelme(args.input_dir, args.output_dir)
+            via2labelme(args.input_dir, args.output_dir, args.group_id_name)
         else:
             print("Error: parameter output_dir is required for this method.")
             pass
