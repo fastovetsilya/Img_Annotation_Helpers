@@ -10,7 +10,6 @@ import shutil
 import glob
 import numpy as np
 
-
 def extract_labelme_labels(labelme_input_directory):
     """
     Extract the list of labels from .json Labelme annotations and create
@@ -685,10 +684,10 @@ if __name__ == "__main__":
                         help="Provide input directory")
     parser.add_argument("--output_dir", required=False,
                         metavar="output/path",
-                        help="Provide output directory")
+                        help="Provide output directory. Output directory IS NOT created automatically")
     parser.add_argument("--group_id_name", required=False, 
                         default = "Group_ID",
-                        help="Provide the name of the attribute to parse in the Group ID column")
+                        help="Provide the name of the attribute to parse in the Group ID column (optional)")
     args = parser.parse_args()
 
     # Check input directory
@@ -736,22 +735,18 @@ if __name__ == "__main__":
         else:
             print("Error: parameter output_dir is required for this method.")
             pass
-    # To be implemented when other shapes are supported
-    # elif args.command == "viarect_to_yolo":
-    #     if args.output_dir is not None:
-    #         via2labelme(args.input_dir, args.output_dir, args.group_id_name)
-    #     else:
-    #         print("Error: parameter output_dir is required for this method.")
-    #         pass
-
     elif args.command == "viapoly_to_yolo":
         if args.output_dir is not None:
-            # Create temporary directory
-            via2labelme(args.input_dir, args.output_dir, args.group_id_name)
+            # Convert to Labelme annotations and then Labelme to YOLO
+            tmp_dir = os.path.join(args.output_dir, "tmp/")
+            os.mkdir(tmp_dir)
+            via2labelme(args.input_dir, tmp_dir, args.group_id_name)
+            labels = extract_labelme_labels(tmp_dir)
+            labelmepoly2yolo(tmp_dir, args.output_dir, labels)
+            shutil.rmtree(tmp_dir)
         else:
             print("Error: parameter output_dir is required for this method.")
             pass
-        
     elif args.command == "create_empty_txt_yolo":
         create_empty_txt_yolo(args.input_dir)
     else:

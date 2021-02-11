@@ -41,7 +41,12 @@ Group IDs for Labelme can also be converted. By default, the method looks for th
 ```python via_to_labelme --input_dir=/path/to/annotations/ --output_dir=/output/path/ --group_id_name=Track_ID``` to parse Track_ID attribute from VIA to "Group ID" column in Labelme.
 To open annotations with Labelme, use ```labelme --nodata``` command
 
-7) Create **empty annotation .txt files in YOLO format** for images without annotations. For better performance of YOLO, you should add images with no annotations. This method creates empty annotation files for them
+7) Convert **VIA polygons to YOLO bounding boxes**
+```python viapoly_to_yolo --input_dir=/path/to/annotations/ --output_dir=/output/path/```
+Indirect converter from VIA polygons to YOLO bounding boxes. Converts VIA polygons to Labelme polygons, and then converts Labelme polygons to YOLO by creating and removing /tmp directory in the output path.  
+The polygons are transformed to bounding boxes to be used with YOLO using minimum covering rectangle.
+
+8) Create **empty annotation .txt files in YOLO format** for images without annotations. For better performance of YOLO, you should add images with no annotations. This method creates empty annotation files for them
 ```python create_empty_txt_yolo --input_dir=/path/to/files/```
 
 Access help with ```python convert.py -h```. Also read comments in the code. 
@@ -54,6 +59,6 @@ Access help with ```python convert.py -h```. Also read comments in the code.
 
 - [ ] Add Labelme to VIA and VIA to Labelme converters for other shapes (only polygons supported now)
 
-- [ ] Add direct YOLO (LabelImg) to VIA and VIA to YOLO converters
+- [ ] Add YOLO (LabelImg) to VIA and VIA to YOLO converters
 
 - [ ] Add approximation of polygons with ellipses for YOLOv4c
