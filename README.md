@@ -31,7 +31,7 @@ To open annotations with Labelme, use ```labelme --nodata``` command
 5) Convert Labelme polygons to VIA image annotation format (only polygons supported now)
 ```python labelme_to_via --input_dir=/path/to/annotations/ --output_dir=/output/path/```
 Group IDs for Labelme can also be converted. By default, the methods looks for the attribute name "Group_ID" in VIA annotations. The default group ID attribute name can be changed by setting ```----group_id_name``` argument. For example, use: 
-```python labelme_to_via --input_dir=/path/to/annotations/ --output_dir=/output/path/ --group_id_name=Track_ID``` to parse Track_ID attribute from VIA to Labelme
+```python labelme_to_via --input_dir=/path/to/annotations/ --output_dir=/output/path/ --group_id_name=Track_ID``` to parse Track_ID attribute from VIA to "Group ID" column in Labelme 
 
 6) Convert VIA polygos to Labelme image annotation format (only polygons supported now)
 ```python via_to_labelme --input_dir=/path/to/annotations/ --output_dir=/output/path/```. To open annotations with Labelme, use ```labelme --nodata``` command
