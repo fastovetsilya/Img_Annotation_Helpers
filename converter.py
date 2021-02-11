@@ -779,6 +779,18 @@ if __name__ == "__main__":
         else:
             print("Error: parameter output_dir is required for this method.")
             pass
+    elif args.command == "viarect_to_yolo":
+        if args.output_dir is not None:
+            # Convert to Labelme annotations and then Labelme to YOLO
+            tmp_dir = os.path.join(args.output_dir, "tmp/")
+            os.mkdir(tmp_dir)
+            via2labelme(args.input_dir, tmp_dir, args.group_id_name)
+            labels = extract_labelme_labels(tmp_dir)
+            labelmerect2yolo(tmp_dir, args.output_dir, labels)
+            shutil.rmtree(tmp_dir)
+        else:
+            print("Error: parameter output_dir is required for this method.")
+            pass
     elif args.command == "create_empty_txt_yolo":
         create_empty_txt_yolo(args.input_dir)
     else:
