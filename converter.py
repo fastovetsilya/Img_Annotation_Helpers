@@ -736,6 +736,22 @@ if __name__ == "__main__":
         else:
             print("Error: parameter output_dir is required for this method.")
             pass
+    # To be implemented when other shapes are supported
+    # elif args.command == "viarect_to_yolo":
+    #     if args.output_dir is not None:
+    #         via2labelme(args.input_dir, args.output_dir, args.group_id_name)
+    #     else:
+    #         print("Error: parameter output_dir is required for this method.")
+    #         pass
+
+    elif args.command == "viapoly_to_yolo":
+        if args.output_dir is not None:
+            # Create temporary directory
+            via2labelme(args.input_dir, args.output_dir, args.group_id_name)
+        else:
+            print("Error: parameter output_dir is required for this method.")
+            pass
+        
     elif args.command == "create_empty_txt_yolo":
         create_empty_txt_yolo(args.input_dir)
     else:
