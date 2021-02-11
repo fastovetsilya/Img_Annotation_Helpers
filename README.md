@@ -24,6 +24,7 @@ To open annotations with Labelme, use ```labelme --nodata``` command
 
 3) Convert Labelme polygons to YOLO bounding boxes 
 ```python labelmepoly_to_yolo --input_dir=/path/to/annotations/ --output_dir=/output/path/```
+The polygons are transformed to bounding boxes to be used with YOLO using minimum covering rectangle
 
 4) Convert Labelme polygons to YOLOv4c ellipse coordinates (only circles supported now)
 ```python labelmepoly_to_yolov4c --input_dir=/path/to/annotations/ --output_dir=/output/path/```
@@ -47,8 +48,8 @@ Access help with ```python convert.py -h```. Also read comments in the code.
 
 - [x] Add YOLO (LabelImg) to Labelme and Labelme to YOLO converters (02/10/2021)
 
-- [ ] Add approximation of polygons with ellipses for YOLOv4c
-
 - [ ] Add Labelme to VIA and VIA to Labelme converters for other shapes (only polygons supported now)
 
-- [ ] Add YOLO (LabelImg) to VIA and VIA to YOLO converters
+- [ ] Add direct YOLO (LabelImg) to VIA and VIA to YOLO converters
+
+- [ ] Add approximation of polygons with ellipses for YOLOv4c
