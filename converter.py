@@ -193,7 +193,7 @@ def yolo2labelmerect(input_dir, output_dir):
     f = open(os.path.join(input_dir, "classes.txt"), "r")
     while True:
         newline = f.readline()
-        if not newline:
+        if not newline.replace("\n", ""):
             break
         label_list[0].append(newline.split(" ")[1].replace("\n", ""))
         label_list[1].append(int(newline.split(" ")[0]))
